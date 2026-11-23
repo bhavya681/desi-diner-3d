@@ -6,6 +6,9 @@
     "dev": "webpack serve --config ./bundler/webpack.dev.js",
     "deploy": "vercel --prod"
   },
+  "overrides": {
+    "memfs": "^3.6.0"
+  },
   "dependencies": {
     "@babel/core": "^7.15.8",
     "@babel/preset-env": "^7.15.8",

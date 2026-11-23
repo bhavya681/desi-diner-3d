@@ -24,6 +24,8 @@ export default class Renderer
         this.instance.setSize(this.sizes.width, this.sizes.height)
         this.instance.setPixelRatio(Math.min(this.sizes.pixelRatio, 2))
         this.instance.outputEncoding = THREE.sRGBEncoding
+        this.instance.toneMapping = THREE.ACESFilmicToneMapping
+        this.instance.toneMappingExposure = 1.25
     
     }
 

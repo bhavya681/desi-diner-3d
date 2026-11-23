@@ -141,6 +141,10 @@ export default class Resources extends EventEmitter
             }
         }
 
+        if(this.sources.length === 0)
+        {
+            window.setTimeout(() => this.trigger('ready'), 0)
+        }
     }
 
     sourceLoaded(source, file)

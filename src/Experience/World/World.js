@@ -1,8 +1,5 @@
 import Experience from '../Experience.js'
-import Environment from './Environment.js'
-import Hologram from './Hologram.js'
-import RamenShop from './RamenShop.js'
-import Reflections from './Reflections.js'
+import DhabaWorld from './dhaba/DhabaWorld.js'
 
 export default class World
 {
@@ -12,18 +9,20 @@ export default class World
         this.scene = this.experience.scene
         this.resources = this.experience.resources
 
-        // Wait for resources
         this.resources.on('ready', () =>
         {
-            // Setup
-            this.ramenShop = new RamenShop()
-            this.hologram = new Hologram()
-            this.reflections = new Reflections()
+            this.dhaba = new DhabaWorld()
+            this.indianStall = this.dhaba
+            this.stall = this.dhaba
+            this.experience.controller.onWorldReady(this.dhaba)
         })
     }
 
     update()
     {
-        if(this.hologram) {this.hologram.update()}
+        if(this.dhaba)
+        {
+            this.dhaba.update()
+        }
     }
 }

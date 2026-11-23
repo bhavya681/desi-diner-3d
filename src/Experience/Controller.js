@@ -1,666 +1,804 @@
 import Experience from './Experience.js'
 import gsap from 'gsap'
+import { areas, dishes, dishById, recipes, recipeById, stories, hints } from './World/dhaba/data.js'
 
 export default class Controller
 {
     constructor()
     {
-
-        // Setup
         this.experience = new Experience()
         this.camera = this.experience.camera
-        this.resources = this.experience.resources
         this.sounds = this.experience.sounds
         this.preLoader = this.experience.preLoader
         this.config = this.experience.config
-        this.animations = this.experience.animations
+
+        this.started = false
+        this.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        this.stall = null
+        this.world = null
+
+        this.hud = document.querySelector('.hud')
+        this.hintText = document.querySelector('#hintText')
+        this.backButton = document.querySelector('#backButton')
+        this.soundButton = document.querySelector('#soundButton')
+        this.settingsButton = document.querySelector('#settingsButton')
+        this.resetButton = document.querySelector('#resetButton')
+        this.orderButton = document.querySelector('#orderButton')
+        this.orderCount = document.querySelector('#orderCount')
+        this.toast = document.querySelector('#toast')
+        this.navRail = document.querySelector('#navRail')
+        this.storyCard = document.querySelector('#storyCard')
+        this.storyTitle = document.querySelector('#storyTitle')
+        this.storyText = document.querySelector('#storyText')
+        this.menuPanel = document.querySelector('#menuPanel')
+        this.menuList = document.querySelector('#menuList')
+        this.dishCard = document.querySelector('#dishCard')
+        this.recipeCard = document.querySelector('#recipeCard')
+        this.orderDrawer = document.querySelector('#orderDrawer')
+        this.settingsPanel = document.querySelector('#settingsPanel')
 
         this.setLogic()
-        this.setProjectControls()
-        this.setMenuControls()
-        this.setAboutMeControls()
-        this.setArcadeScreenControls()
-        this.setCamControls()
-        this.setVideoControls()
-        this.setSocialControls()
+        this.setHudControls()
+        this.buildNavigation()
+        this.buildMenu()
+        this.buildRecipeList()
+        this.setPanels()
 
-        this.resources.on('ready', () =>
+        this.preLoader.on('start', () => this.start())
+
+        window.addEventListener('keydown', (event) =>
         {
-            this.ramenShop = this.experience.world.ramenShop
-            this.materials = this.experience.materials
+            if(event.key === 'Escape' && this.started)
+            {
+                const openPanel = this.getOpenPanel()
+                if(openPanel)
+                {
+                    this.closePanels()
+                }
+                else
+                {
+                    this.back()
+                }
+            }
         })
-
     }
 
-    
+    onWorldReady(world)
+    {
+        this.world = world
+        this.stall = world
+    }
+
     setLogic()
     {
-        this.logic = {}
-        this.logic.buttonsLocked = false
-        this.logic.mode = 'menu'
-
-        this.logic.lockButtons = async (lockDuration) =>
-        {
-            this.logic.buttonsLocked = true
-            await this.sleep(lockDuration)
-            this.logic.buttonsLocked = false
+        this.logic = {
+            locked: false,
+            mode: 'overview',
+            history: [],
+            order: [],
+            currentDish: null,
+            currentRecipe: null,
+            recipeStep: 0,
+            radioOn: false,
+            lightsOn: true,
+            quality: this.config.vertical ? 'medium' : 'high'
         }
     }
 
-    // Project selection
-
-    setProjectControls()
+    setPanels()
     {
-        this.projectControls = {}
-        this.projectControls.project1 = async () =>
+        document.querySelectorAll('[data-close]').forEach((button) =>
         {
-            if(this.logic.buttonsLocked === false && this.logic.mode === 'projects0')
-            {
-                this.sounds.playBloop()
-                this.logic.mode = 'projects1'
-                this.bigScreenTransition(
-                    this.materials.vendingMachineScreenMaterial,
-                    this.resources.items.project1Texture,
-                    0.2
-                )
-            }
-        }
-        this.projectControls.project2 = async () =>
-        {
-            if(this.logic.buttonsLocked === false && this.logic.mode === 'projects0')
-            {
-                this.sounds.playBloop()
-                this.logic.mode = 'projects2'
-                this.bigScreenTransition(
-                    this.materials.vendingMachineScreenMaterial,
-                    this.resources.items.project2Texture,
-                    0.2
-                )
-            }
-        }
-        this.projectControls.project3 = async () =>
-        {
-            if(this.logic.buttonsLocked === false && this.logic.mode === 'projects0')
-            {
-                this.sounds.playBloop()
-                this.logic.mode = 'projects3'
-                this.bigScreenTransition(
-                    this.materials.vendingMachineScreenMaterial,
-                    this.resources.items.project3Texture,
-                    0.2
-                )
-            }
-        }
-        this.projectControls.project4 = async () =>
-        {
-            if(this.logic.buttonsLocked === false && this.logic.mode === 'projects0')
-            {
-                this.sounds.playBloop()
-                this.logic.mode = 'projects4'
-                this.bigScreenTransition(
-                    this.materials.vendingMachineScreenMaterial,
-                    this.resources.items.project4Texture,
-                    0.2
-                )
-            }
-        }
-        this.projectControls.project5 = async () =>
-        {
-            if(this.logic.buttonsLocked === false && this.logic.mode === 'projects0')
-            {
-                this.sounds.playBloop()
-                this.logic.mode = 'projects5'
-                this.bigScreenTransition(
-                    this.materials.vendingMachineScreenMaterial,
-                    this.resources.items.project5Texture,
-                    0.2
-                )
-            }
-        }
-        this.projectControls.project6 = async () =>
-        {
-            if(this.logic.buttonsLocked === false && this.logic.mode === 'projects0')
-            {
-                this.sounds.playBloop()
-                this.logic.mode = 'projects6'
-                this.bigScreenTransition(
-                    this.materials.vendingMachineScreenMaterial,
-                    this.resources.items.project6Texture,
-                    0.2
-                )
-            }
-        }
-        this.projectControls.project7 = async () =>
-        {
-            if(this.logic.buttonsLocked === false && this.logic.mode === 'projects0')
-            {
-                this.sounds.playBloop()
-                this.logic.mode = 'projects7'
-                this.bigScreenTransition(
-                    this.materials.vendingMachineScreenMaterial,
-                    this.resources.items.project7Texture,
-                    0.2
-                )
-            }
-        }
-        this.projectControls.project8 = async () =>
-        {
-            if(this.logic.buttonsLocked === false && this.logic.mode === 'projects0')
-            {
-                this.sounds.playBloop()
-                this.logic.mode = 'projects8'
-                this.bigScreenTransition(
-                    this.materials.vendingMachineScreenMaterial,
-                    this.resources.items.project8Texture,
-                    0.2
-                )
-            }
-        }
+            button.addEventListener('click', () => this.closePanels())
+        })
 
-        // Go back
-        this.projectControls.projectBack = async () =>
+        document.querySelectorAll('.panelScrim').forEach((scrim) =>
         {
-            if(this.logic.buttonsLocked === false && (this.logic.mode === 'projects0'))
-            {
-                this.sounds.playBloop()
-                this.logic.lockButtons(1500)
-                this.logic.mode = 'menu'
-                this.camControls.toDefault()
-                this.bigScreenTransition(
-                    this.materials.vendingMachineScreenMaterial,
-                    this.resources.items.vendingMachineDefaultTexture,
-                    0.4,
-                    true
-                )
-            }
-
-            if(this.logic.buttonsLocked === false && (this.logic.mode === 'projects1' || this.logic.mode === 'projects2' || this.logic.mode === 'projects3'|| this.logic.mode === 'projects4'|| this.logic.mode === 'projects5'|| this.logic.mode === 'projects6'|| this.logic.mode === 'projects7'|| this.logic.mode === 'projects8'))
-            {
-                this.sounds.playBloop()
-                this.logic.mode = 'projects0'
-                this.bigScreenTransition(
-                    this.materials.vendingMachineScreenMaterial,
-                    this.resources.items.vendingMachineMenuTexture,
-                    0.2
-                )
-            }
-            console.log('projectBack')
-        }
-
-        // Enter
-        this.projectControls.projectEnter = async () =>
-        {
-            console.log('projectEnter')
-        }
+            scrim.addEventListener('click', () => this.closePanels())
+        })
     }
 
-    // Main menu controls
-
-    setMenuControls()
+    buildNavigation()
     {
-        this.menuControls = {}
-        this.menuControls.projects = async (obj, color) =>
+        if(!this.navRail)
         {
-            if(this.logic.buttonsLocked === false && this.logic.mode === 'menu')
+            return
+        }
+        areas.forEach((area) =>
+        {
+            const button = document.createElement('button')
+            button.type = 'button'
+            button.className = 'navItem'
+            button.dataset.area = area.id
+            button.innerHTML = `<span class="navIcon">${this.navIcon(area.icon)}</span><span class="navLabel">${area.label}</span>`
+            button.addEventListener('click', () => this.explore(area.id, area.hint))
+            this.navRail.appendChild(button)
+        })
+    }
+
+    navIcon(icon)
+    {
+        const icons = {
+            road: '━', gate: '⌂', plate: '◉', fire: '♨', cup: '☕', star: '✦',
+            truck: '▰', leaf: '♣', note: '₹'
+        }
+        return icons[icon] || '•'
+    }
+
+    buildMenu()
+    {
+        if(!this.menuList)
+        {
+            return
+        }
+        dishes.forEach((dish) =>
+        {
+            const item = document.createElement('button')
+            item.type = 'button'
+            item.className = 'menuRow'
+            item.dataset.dish = dish.id
+            item.innerHTML = `
+                <span class="menuSwatch" style="--swatch:${dish.color}"></span>
+                <span class="menuRowName">${dish.name}</span>
+                <span class="menuSpice">${'🌶'.repeat(dish.spice) || '—'}</span>
+                <span class="menuPrice">₹${dish.price}</span>
+            `
+            item.addEventListener('click', () => this.openDish(dish.id))
+            this.menuList.appendChild(item)
+        })
+    }
+
+    buildRecipeList()
+    {
+        const list = document.querySelector('#recipeList')
+        if(!list)
+        {
+            return
+        }
+        recipes.forEach((recipe) =>
+        {
+            const item = document.createElement('button')
+            item.type = 'button'
+            item.className = 'recipeRow'
+            item.dataset.recipe = recipe.id
+            item.innerHTML = `<span class="recipeNumber">0${recipes.indexOf(recipe) + 1}</span><span>${recipe.name}</span><span class="recipeArrow">→</span>`
+            item.addEventListener('click', () => this.startRecipe(recipe.id))
+            list.appendChild(item)
+        })
+    }
+
+    setHudControls()
+    {
+        this.backButton.addEventListener('click', () => this.back())
+        this.resetButton.addEventListener('click', () =>
+        {
+            this.closePanels()
+            this.explore('overview', 'Back on the highway — where to next?')
+        })
+        this.soundButton.addEventListener('click', () =>
+        {
+            const muted = this.sounds.toggleMute()
+            this.soundButton.textContent = muted ? 'SOUND OFF' : 'SOUND ON'
+            this.soundButton.classList.toggle('is-muted', muted)
+        })
+        this.settingsButton.addEventListener('click', () => this.togglePanel('settingsPanel'))
+        this.orderButton.addEventListener('click', () => this.openOrder())
+
+        document.querySelectorAll('[data-quality]').forEach((button) =>
+        {
+            button.addEventListener('click', () =>
             {
+                const level = button.dataset.quality
+                this.logic.quality = level
+                this.experience.performance.manual = true
+                if(this.world)
+                {
+                    this.world.setQuality(level)
+                }
+                document.querySelectorAll('[data-quality]').forEach((candidate) => candidate.classList.toggle('is-active', candidate === button))
+                this.setHint(`Visual quality set to ${level.toUpperCase()}`)
                 this.sounds.playClick()
-                this.logic.mode = 'projects0'
-                this.menuControls.buttonIndicator(obj, color)
-                this.camControls.toProjects()
+            })
+        })
 
-                this.bigScreenTransition(
-                    this.materials.vendingMachineScreenMaterial,
-                    this.resources.items.vendingMachineMenuTexture,
-                    0.2
-                )
-            }
- 
-        }
-        this.menuControls.jZhou = async (obj, color) =>
+        const cookButton = document.querySelector('#cookButton')
+        if(cookButton)
         {
-            if(this.logic.buttonsLocked === false && this.logic.mode === 'menu')
-            {
-                this.sounds.playClick()
-                this.sounds.playWhoosh()
-                this.menuControls.buttonIndicator(obj, color)
-                this.camera.transitions.jZhou(1.5)
-            }
+            cookButton.addEventListener('click', () => this.togglePanel('recipeCard'))
         }
-        this.menuControls.articles = async (obj, color) =>
+        const menuButton = document.querySelector('#menuButton')
+        if(menuButton)
         {
-            if(this.logic.buttonsLocked === false && this.logic.mode === 'menu')
-            {
-                this.sounds.playClick()
-                this.menuControls.buttonIndicator(obj, color)
-                await this.sleep(250)
-                window.open('https://medium.com/@jesse-zhou', '_blank')
-            }
+            menuButton.addEventListener('click', () => this.openMenu())
         }
-        this.menuControls.aboutMe = async (obj, color) =>
+        const checkoutButton = document.querySelector('#checkoutButton')
+        if(checkoutButton)
         {
-            if(this.logic.buttonsLocked === false && this.logic.mode === 'menu')
+            checkoutButton.addEventListener('click', () =>
             {
-                this.sounds.playClick()
-                this.logic.mode = 'aboutMe'
-                this.menuControls.buttonIndicator(obj, color)
-                this.camControls.toAboutMe()
-
-                if(this.config.vertical === true)
+                if(!this.logic.order.length)
                 {
-                    this.bigScreenTransition(
-                        this.materials.bigScreenMaterial,
-                        this.resources.items.bigScreenAboutMeMobileTexture,
-                        0.2,
-                    )
+                    this.showToast('NOTHING TO BILL YET — ADD A DISH FIRST', 'red')
+                    return
                 }
-                else
+                this.sounds.playDing()
+                checkoutButton.textContent = 'RECEIPT PRINTED ✓'
+                const items = this.logic.order.length
+                window.setTimeout(() =>
                 {
-                    this.bigScreenTransition(
-                        this.materials.bigScreenMaterial,
-                        this.resources.items.bigScreenAboutMeTexture,
-                        0.2,
-                    )
-                }
-
-
-
-            }
+                    this.logic.order = []
+                    this.orderCount.textContent = '0'
+                    this.renderOrder()
+                    checkoutButton.textContent = 'PRINT THE BILL'
+                    this.closePanels()
+                    this.showToast(`${items} ITEM${items > 1 ? 'S' : ''} SERVED — COME AGAIN!`, 'green')
+                }, 1400)
+            })
         }
-        this.menuControls.credits = async (obj, color) =>
+    }
+
+    start()
+    {
+        if(this.started)
         {
-            if(this.logic.buttonsLocked === false && this.logic.mode === 'menu')
+            return
+        }
+        this.started = true
+        this.hud.classList.add('is-visible')
+        this.setHint('Tap anything that glows — the dhaba is full of secrets')
+        this.startHintRotation()
+    }
+
+    startHintRotation()
+    {
+        window.setInterval(() =>
+        {
+            if(!this.started || this.getOpenPanel() || this.logic.locked)
             {
-                this.sounds.playClick()
-                this.logic.mode = 'creditsStart'
-                this.menuControls.buttonIndicator(obj, color)
-                this.camControls.toCredits()
+                return
             }
-        }
+            this.setHint(hints[Math.floor(Math.random() * hints.length)])
+        }, 14000)
+    }
 
-        this.menuControls.buttonIndicator = async (obj, color) =>
+    async explore(name, hint)
+    {
+        if(!this.started || this.logic.locked || !this.camera.anchors[name])
         {
-            if (color === 'black') {
-                obj.material = this.ramenShop.materials.whiteSignMaterial
-                await this.sleep(200)
-                obj.material = this.ramenShop.materials.blackSignMaterial
-            }
-            if (color === 'white') {
-                obj.material = this.ramenShop.materials.blackSignMaterial
-                await this.sleep(200)
-                obj.material = this.ramenShop.materials.whiteSignMaterial
+            return
+        }
+        this.closePanels()
+        this.logic.locked = true
+        this.logic.mode = name
+        this.updateHistory(name)
+        this.updateBack()
+        this.updateNav(name)
+
+        if(hint)
+        {
+            this.setHint(hint)
+        }
+        this.sounds.playWhoosh()
+        await this.camera.transitions.goTo(name, this.reducedMotion ? 0.14 : 1.6)
+        this.logic.locked = false
+    }
+
+    updateHistory(name)
+    {
+        if(this.logic.history[this.logic.history.length - 1] !== name)
+        {
+            this.logic.history.push(name)
+            if(this.logic.history.length > 12)
+            {
+                this.logic.history.shift()
             }
         }
     }
 
-    // About me big screen controls
-
-    setAboutMeControls()
+    back()
     {
-        this.aboutMeControls = {}
-
-        this.aboutMeControls.aboutMeScreens = async () =>
+        if(this.getOpenPanel())
         {
-            if(this.logic.buttonsLocked === false && (this.logic.mode === 'skills' || this.logic.mode === 'experience'))
-            {
-                this.sounds.playBloop()
-                this.logic.mode = 'aboutMe'
-                
-                if(this.config.vertical === true)
-                {
-                    this.bigScreenTransition(
-                        this.materials.bigScreenMaterial,
-                        this.resources.items.bigScreenAboutMeMobileTexture,
-                        0.2
-                    )
-                }
-                else
-                {
-                    this.bigScreenTransition(
-                        this.materials.bigScreenMaterial,
-                        this.resources.items.bigScreenAboutMeTexture,
-                        0.2
-                    )
-                }
-            }
+            this.closePanels()
+            return
         }
-
-        this.aboutMeControls.aboutMeSkills = async () =>
+        if(this.logic.locked)
         {
-            if(this.logic.buttonsLocked === false && (this.logic.mode === 'aboutMe' || this.logic.mode === 'experience'))
-            {
-                this.sounds.playBloop()
-                this.logic.mode = 'skills'
-
-                if(this.config.vertical === true)
-                {
-                    this.bigScreenTransition(
-                        this.materials.bigScreenMaterial,
-                        this.resources.items.bigScreenSkillsMobileTexture,
-                        0.2
-                    )
-                }
-                else
-                {
-                    this.bigScreenTransition(
-                        this.materials.bigScreenMaterial,
-                        this.resources.items.bigScreenSkillsTexture,
-                        0.2
-                    )
-                }
-            }
+            return
         }
+        this.logic.history.pop()
+        const previous = this.logic.history.pop() || 'overview'
+        this.explore(previous, 'Back to where the story started')
+    }
 
-        this.aboutMeControls.aboutMeExperience = async () =>
+    updateBack()
+    {
+        this.backButton.classList.toggle('is-visible', this.logic.mode !== 'overview')
+    }
+
+    updateNav(name)
+    {
+        document.querySelectorAll('.navItem').forEach((item) =>
         {
-            if(this.logic.buttonsLocked === false && (this.logic.mode === 'aboutMe' || this.logic.mode === 'skills'))
-            {
-                this.sounds.playBloop()
-                this.logic.mode = 'experience'
+            item.classList.toggle('is-active', item.dataset.area === name)
+        })
+    }
 
-                if(this.config.vertical === true)
-                {
-                    this.bigScreenTransition(
-                        this.materials.bigScreenMaterial,
-                        this.resources.items.bigScreenExperienceMobileTexture,
-                        0.2
-                    )
-                }
-                else
-                {
-                    this.bigScreenTransition(
-                        this.materials.bigScreenMaterial,
-                        this.resources.items.bigScreenExperienceTexture,
-                        0.2
-                    )
-                }
-            }
+    setHint(text)
+    {
+        if(!this.hintText)
+        {
+            return
         }
+        this.hintText.textContent = text
+        gsap.fromTo(this.hintText, { opacity: 0, y: 5 }, { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' })
+    }
 
-        this.aboutMeControls.aboutMeBack = async () =>
+    showToast(text, tone = 'default')
+    {
+        if(!this.toast)
         {
-            if(this.logic.buttonsLocked === false && (this.logic.mode === 'aboutMe' || this.logic.mode === 'skills' || this.logic.mode === 'experience'))
-            {
-                this.sounds.playBloop()
-                this.logic.mode = 'menu'
-                this.camControls.toDefault()
+            return
+        }
+        this.toast.textContent = text
+        this.toast.className = `toast is-visible toast-${tone}`
+        window.clearTimeout(this.toastTimeout)
+        this.toastTimeout = window.setTimeout(() => this.toast.classList.remove('is-visible'), 2600)
+    }
 
-                this.bigScreenTransition(
-                    this.materials.bigScreenMaterial,
-                    this.resources.items.bigScreenDefaultTexture,
-                    0.4,
-                    1,
-                    0
-                )
-            }
+    showStory(title, text)
+    {
+        if(!this.storyCard)
+        {
+            this.showToast(text)
+            return
+        }
+        this.storyTitle.textContent = title
+        this.storyText.textContent = text
+        this.storyCard.classList.add('is-visible')
+        window.clearTimeout(this.storyTimeout)
+        this.storyTimeout = window.setTimeout(() => this.storyCard.classList.remove('is-visible'), 5200)
+    }
+
+    getOpenPanel()
+    {
+        return document.querySelector('.ui-panel.is-open')
+    }
+
+    closePanels()
+    {
+        document.querySelectorAll('.ui-panel').forEach((panel) => panel.classList.remove('is-open'))
+    }
+
+    togglePanel(id)
+    {
+        const panel = document.getElementById(id)
+        if(!panel)
+        {
+            return
+        }
+        const wasOpen = panel.classList.contains('is-open')
+        this.closePanels()
+        if(!wasOpen)
+        {
+            panel.classList.add('is-open')
         }
     }
 
-    //arcade screen credit controls
-
-    setArcadeScreenControls()
+    async handleInteraction(interaction, mesh)
     {
-        this.screenControls = {}
-        this.screenControls.arcadeScreen = async () =>
+        if(!this.started || this.logic.locked)
         {
-            if(this.logic.buttonsLocked === false && this.logic.mode === 'creditsStart' )
+            return
+        }
+
+        const action = interaction.action
+
+        if(action === 'menu')
+        {
+            this.sounds.playClick()
+            await this.explore('menu', 'The full menu — tap a dish for the story')
+            this.openMenu()
+            return
+        }
+
+        if(action === 'dish' || action === 'dishLabel')
+        {
+            const dishId = interaction.dishId
+            if(dishId)
             {
-                this.sounds.playArcade()
-                this.logic.mode = 'credits'
-                this.screenTransition(
-                    this.materials.arcadeScreenMaterial,
-                    this.resources.items.arcadeScreenCreditsTexture,
-                    0.2
-                )
+                await this.explore('display', 'Fresh from the display — tap ADD TO ORDER if you like it')
+                this.openDish(dishId)
             }
-            else if(this.logic.buttonsLocked === false && this.logic.mode === 'credits' )
+            else
             {
-                this.sounds.playArcade()
-                this.logic.mode = 'thanks'
-                this.screenTransition(
-                    this.materials.arcadeScreenMaterial,
-                    this.resources.items.arcadeScreenThanksTexture,
-                    0.2
-                )
+                await this.explore('display', 'Tap a dish to see ingredients and price')
             }
-            else if(this.logic.buttonsLocked === false && this.logic.mode === 'thanks' )
+            return
+        }
+
+        if(action === 'chai' || action === 'chaiPour')
+        {
+            this.sounds.playPour()
+            await this.explore('chai', 'The kettle is on — pouring a hot glass of masala chai')
+            if(this.world)
             {
-                this.sounds.playArcade()
-                this.logic.mode = 'menu'
-                this.camControls.toDefault()
-                this.screenTransition(
-                    this.materials.arcadeScreenMaterial,
-                    this.resources.items.arcadeScreenDefaultTexture,
-                    0.2
-                )
+                this.world.pourChai()
             }
-        }
-
-    }
-
-    // camera transitions and angles
-
-    setCamControls()
-    {
-        this.camControls = {}
-        this.camControls.toProjects = async () =>
-        {
-            this.sounds.playWhoosh()
-
-            this.logic.lockButtons(1500)
-            this.camera.camAngle.unlocked()
-            this.camera.transitions.vendingMachine(1.5)
-            await this.sleep(1500)
-            this.camera.camAngle.vendingMachine()
-        }
-        this.camControls.toDefault = async () =>
-        {
-            this.sounds.playWhoosh()
-
-            this.logic.lockButtons(1500)
-            this.camera.camAngle.unlocked()
-            this.camera.transitions.default(1.5)
-            await this.sleep(1500)
-            this.camera.camAngle.default()
-        }
-        this.camControls.toAboutMe = async () =>
-        {
-            this.sounds.playWhoosh()
-
-            this.logic.lockButtons(1500)
-            this.camera.camAngle.unlocked()
-            this.camera.transitions.aboutMe(1.5)
-            await this.sleep(1500)
-            this.camera.camAngle.aboutMe()
-        }
-        this.camControls.toCredits = async () =>
-        {
-            this.sounds.playWhoosh()
-
-            this.logic.lockButtons(1500)
-            this.camera.camAngle.unlocked()
-            this.camera.transitions.credits(1.5)
-            await this.sleep(1500)
-            this.camera.camAngle.credits()
-        }
-    }
-
-    // video controls
-
-    setVideoControls()
-    {
-        this.videoControls = {}
-
-        this.videoControls.bigScreen = async () =>
-        {
-            console.log('bigScreen')
-        }
-
-        this.videoControls.littleTVScreen = async () =>
-        {
-            this.videoControls.togglePlayback(this.resources.video['littleTVScreenVideoTexture'])
-        }
-
-        this.videoControls.tallScreen = async () =>
-        {
-            this.videoControls.togglePlayback(this.resources.video['tallScreenVideoTexture'])
-        }
-
-        this.videoControls.tvScreen = async () =>
-        {
-            if(this.resources.video['tvScreenVideoTexture'].paused)
-            {this.resources.video['tvScreenVideoTexture'].play()}
-            else {
-                window.open('https://www.youtube.com/watch?v=fYcphQibLek', '_blank');
-                this.resources.video['tvScreenVideoTexture'].pause()
+            if(action === 'chai')
+            {
+                this.openDish('chai')
             }
+            return
         }
 
-        this.videoControls.sideScreen = async () =>
+        if(action === 'tandoor')
         {
-
+            this.sounds.playFire()
+            await this.explore('tandoor', 'The clay oven is roaring — watch the naan blister')
+            if(this.world)
+            {
+                this.world.flareTandoor()
+            }
+            return
         }
 
-        this.smallScreen1Counter = 1
-
-        this.videoControls.smallScreen1 = async () =>
-        { 
-            if(this.smallScreen1Counter < this.resources.carousel1.length)
-            {this.smallScreen1Counter++}
-            else {this.smallScreen1Counter = 1}
-
-            this.screenTransition(
-                this.materials.smallScreen1Material,
-                this.resources.carousel1[this.smallScreen1Counter-1],
-                0.8
-            )
-
-            this.animations.photoCounter = 0
-        }
-
-        this.smallScreen2Counter = 1
-
-        this.videoControls.smallScreen2 = async () =>
+        if(action === 'cook')
         {
-            if(this.smallScreen2Counter < this.resources.carousel2.length)
-            {this.smallScreen2Counter++}
-            else {this.smallScreen2Counter = 1}
-
-            this.screenTransition(
-                this.materials.smallScreen2Material,
-                this.resources.carousel2[this.smallScreen2Counter-1],
-                0.8
-            )
-
-            this.animations.photoCounter = 0
+            this.sounds.playClick()
+            this.togglePanel('recipeCard')
+            return
         }
 
-        this.videoControls.smallScreen3 = async () =>
+        if(action === 'cookIngredient')
         {
-            this.videoControls.togglePlayback(this.resources.video['smallScreen3VideoTexture'])
+            this.handleCookingClick(interaction.ingredientId, mesh)
+            return
         }
 
-        this.videoControls.smallScreen4 = async () =>
+        if(action === 'truck' || action === 'horn' || action === 'hornSign')
         {
-            this.videoControls.togglePlayback(this.resources.video['smallScreen4VideoTexture'])
+            this.sounds.playHorn()
+            await this.explore('trucks', 'Horn OK please — the trucks are awake')
+            if(this.world)
+            {
+                const truck = this.world.trucks && this.world.trucks[interaction.index || 0]
+                this.world.flashTruck(truck)
+            }
+            return
         }
 
-        this.videoControls.smallScreen5 = async () =>
+        if(action === 'charpai')
         {
-            this.videoControls.togglePlayback(this.resources.video['smallScreen5VideoTexture'])
+            await this.explore('outdoor', 'Pull up a charpai and stay a while')
+            this.showStory('CHARPAI STORIES', stories.charpai)
+            return
         }
 
-        this.videoControls.togglePlayback = async (video) =>
+        if(action === 'light')
+        {
+            if(this.world)
+            {
+                const on = this.world.toggleLight(mesh)
+                this.sounds.playClick()
+                this.showToast(on ? 'BULB ON — THE YARD GLOWS AGAIN' : 'BULB OFF — A LITTLE DARKER NOW')
+            }
+            return
+        }
+
+        if(action === 'fan' || action === 'fanSwitch')
+        {
+            if(this.world)
+            {
+                const index = interaction.fanIndex === undefined ? 0 : interaction.fanIndex
+                const fan = this.world.fans[index]
+                const speed = this.world.toggleFan(fan)
+                this.sounds.playFan()
+                this.setHint(speed === 0 ? 'Fan switched off — the kitchen gets hotter' : `Fan speed ${speed === 1 ? 'normal' : 'full blast'}`)
+            }
+            return
+        }
+
+        if(action === 'radio')
+        {
+            this.toggleRadio()
+            return
+        }
+
+        if(action === 'cash')
+        {
+            this.sounds.playDing()
+            await this.explore('cash', 'The bill counter — your order is waiting')
+            this.openOrder()
+            return
+        }
+
+        if(action === 'spice')
+        {
+            this.sounds.playPour()
+            await this.explore('spice', 'Freshly ground masalas — tap a jar to release the aroma')
+            if(this.world && mesh.parent)
+            {
+                this.world.spiceBurst(mesh.parent)
+            }
+            this.showStory('MASALA SHELF', stories.spice)
+            return
+        }
+
+        if(action === 'veg')
+        {
+            await this.explore('prep', 'Today’s vegetables — chopped by hand, cooked with fire')
+            if(this.world)
+            {
+                this.world.shakeVegetables(mesh.parent)
+            }
+            this.showStory(interaction.vegName || 'FRESH VEG', stories.vegetable)
+            return
+        }
+
+        if(action === 'water')
+        {
+            this.sounds.playWater()
+            if(this.world)
+            {
+                this.world.splashWater(this.world.handpump)
+            }
+            this.showToast('COLD WATER — FRESH FROM THE HANPUMP', 'blue')
+            return
+        }
+
+        if(action === 'poster')
+        {
+            this.sounds.playClick()
+            if(this.world)
+            {
+                this.world.popPoster(mesh)
+            }
+            this.showStory('WALL OF MEMORIES', stories.poster)
+            return
+        }
+
+        if(action === 'fridge' || action === 'bottle' || action === 'oil' || action === 'plate' || action === 'glass')
         {
             this.sounds.playBloop()
-            if(video.paused)
-            {video.play()}
-            else {video.pause()}
+            this.showToast(interaction.label.toUpperCase(), 'default')
+            return
         }
 
-
-    }
-
-    setSocialControls()
-    {
-        this.socialControls = {}
-        this.socialControls.twitter = async () =>
+        if(action === 'streetlight' || action === 'neon' || action === 'sign' || action === 'highwaySign')
         {
-            if(this.logic.buttonsLocked === false && (this.logic.mode === 'aboutMe' || this.logic.mode === 'skills' || this.logic.mode === 'experience'))
+            this.sounds.playDing()
+            if(interaction.camera)
             {
-                window.open('https://twitter.com/Jessezhouu', '_blank');
+                await this.explore(interaction.camera, interaction.hint || interaction.label)
             }
-            
+            this.showToast(interaction.label.toUpperCase(), 'amber')
+            return
         }
 
-        this.socialControls.linkedIn = async () =>
+        this.sounds.playBloop()
+        if(interaction.hint)
         {
-            if(this.logic.buttonsLocked === false && (this.logic.mode === 'aboutMe' || this.logic.mode === 'skills' || this.logic.mode === 'experience'))
-            {
-                window.open('https://www.linkedin.com/in/jessezhou1998', '_blank');
-            }
-            
+            this.showStory(interaction.label, interaction.hint)
         }
-
-        this.socialControls.gitHub = async () =>
+        else
         {
-            if(this.logic.buttonsLocked === false && (this.logic.mode === 'aboutMe' || this.logic.mode === 'skills' || this.logic.mode === 'experience'))
-            {
-                window.open('https://github.com/enderh3art', '_blank');
-            }
-            
-        }
-
-        this.socialControls.medium = async () =>
-        {
-            if(this.logic.buttonsLocked === false && (this.logic.mode === 'aboutMe' || this.logic.mode === 'skills' || this.logic.mode === 'experience'))
-            {
-                window.open('https://medium.com/@jesse-zhou', '_blank');
-            }
-            
-        }
-
-        this.socialControls.mail = async () =>
-        {
-            if(this.logic.buttonsLocked === false && (this.logic.mode === 'aboutMe' || this.logic.mode === 'skills' || this.logic.mode === 'experience'))
-            {
-                window.location.href='mailto:jessezhouu@gmail.com'
-            }
-            
+            this.setHint(interaction.label)
         }
     }
 
-    screenTransition(material,newTexture, duration,)
+    toggleRadio()
     {
-        material.uniforms.texture2.value = newTexture
-        gsap.to(material.uniforms.progress, {value:1,
-            duration: duration,
-            ease: "power1.inOut",
-            onComplete: () => {
-                material.uniforms.texture1.value = newTexture
-                material.uniforms.progress.value = 0
+        this.logic.radioOn = !this.logic.radioOn
+        if(this.world)
+        {
+            this.world.radioOn = this.logic.radioOn
+            if(this.world.radioLight)
+            {
+                this.world.radioLight.visible = this.logic.radioOn
             }
+        }
+        this.sounds.playRadio(this.logic.radioOn)
+        this.showStory('THE OLD RADIO', this.logic.radioOn ? `${stories.radio} The dial is glowing now.` : 'The radio goes quiet. The highway is loud enough.')
+    }
+
+    openMenu()
+    {
+        this.togglePanel('menuPanel')
+    }
+
+    openDish(id)
+    {
+        const dish = dishById[id]
+        if(!dish)
+        {
+            return
+        }
+        this.logic.currentDish = id
+        document.querySelector('#dishName').textContent = dish.name
+        document.querySelector('#dishPrice').textContent = `₹${dish.price}`
+        document.querySelector('#dishDescription').textContent = dish.description
+        document.querySelector('#dishSpice').innerHTML = dish.spice ? `<span>SPICE</span> ${'◆'.repeat(dish.spice)}` : '<span>SPICE</span> MILD'
+        document.querySelector('#dishSwatch').style.background = dish.color
+        document.querySelector('#dishIngredients').innerHTML = dish.ingredients.map((ingredient) => `<span>${ingredient}</span>`).join('')
+
+        const addButton = document.querySelector('#addDishButton')
+        addButton.onclick = () =>
+        {
+            this.addOrder(id)
+            this.sounds.playDing()
+            addButton.textContent = 'ADDED ✓'
+            window.setTimeout(() => { addButton.textContent = 'ADD TO ORDER' }, 1400)
+        }
+        this.closePanels()
+        this.dishCard.classList.add('is-open')
+        if(this.world)
+        {
+            this.world.highlightDish(id)
+        }
+    }
+
+    addOrder(id)
+    {
+        this.logic.order.push(id)
+        if(this.orderCount)
+        {
+            this.orderCount.textContent = this.logic.order.length
+        }
+        const dish = dishById[id]
+        this.showToast(`${dish ? dish.name.toUpperCase() : id} ADDED TO ORDER`, 'green')
+        this.renderOrder()
+    }
+
+    renderOrder()
+    {
+        const list = document.querySelector('#orderList')
+        const total = document.querySelector('#orderTotal')
+        if(!list || !total)
+        {
+            return
+        }
+        const counts = {}
+        this.logic.order.forEach((id) => { counts[id] = (counts[id] || 0) + 1 })
+        const entries = Object.entries(counts)
+
+        if(!entries.length)
+        {
+            list.innerHTML = '<p class="emptyOrder">Your order is empty. Tap a dish in the display or menu.</p>'
+            total.textContent = '₹0'
+            return
+        }
+
+        let sum = 0
+        list.innerHTML = entries.map(([id, quantity]) =>
+        {
+            const dish = dishById[id]
+            sum += (dish ? dish.price : 0) * quantity
+            return `<div class="orderRow"><span>${quantity} × ${dish ? dish.name : id}</span><span>₹${(dish ? dish.price : 0) * quantity}</span></div>`
+        }).join('')
+        total.textContent = `₹${sum}`
+    }
+
+    openOrder()
+    {
+        this.renderOrder()
+        this.togglePanel('orderDrawer')
+    }
+
+    startRecipe(id)
+    {
+        const recipe = recipeById[id]
+        if(!recipe || !this.world)
+        {
+            return
+        }
+        this.logic.currentRecipe = id
+        this.logic.recipeStep = 0
+        this.closePanels()
+        this.sounds.playCookingOneShot()
+        this.world.startCooking(recipe)
+        this.explore(recipe.camera, `Chef mode: ${recipe.name} — tap the ingredients on the counter`)
+        this.updateRecipePanel()
+        window.setTimeout(() => this.recipeCard.classList.add('is-open'), this.reducedMotion ? 100 : 1450)
+    }
+
+    updateRecipePanel()
+    {
+        const recipe = recipeById[this.logic.currentRecipe]
+        if(!recipe)
+        {
+            return
+        }
+        const title = document.querySelector('#recipeTitle')
+        const stepText = document.querySelector('#recipeStep')
+        const ingredientList = document.querySelector('#recipeIngredients')
+        const actionButton = document.querySelector('#recipeAction')
+
+        title.textContent = recipe.name
+        stepText.textContent = `STEP ${Math.min(this.logic.recipeStep + 1, recipe.ingredients.length + 1)} / ${recipe.ingredients.length + 2}`
+
+        ingredientList.innerHTML = recipe.ingredients.map((ingredient, index) =>
+        {
+            const done = index < this.logic.recipeStep
+            const next = index === this.logic.recipeStep
+            return `<button type="button" class="ingredientChip ${done ? 'is-done' : ''} ${next ? 'is-next' : ''}" data-ingredient="${ingredient.id}" ${done || !next ? 'disabled' : ''}>
+                <span class="ingredientDot" style="--dot:${ingredient.color}"></span>${ingredient.label}
+            </button>`
+        }).join('')
+
+        ingredientList.querySelectorAll('[data-ingredient]').forEach((button) =>
+        {
+            button.addEventListener('click', () => this.handleCookingClick(button.dataset.ingredient))
         })
+
+        if(this.logic.recipeStep >= recipe.ingredients.length)
+        {
+            actionButton.style.display = 'block'
+            actionButton.textContent = this.logic.recipeStep === recipe.ingredients.length ? 'STIR & COOK' : 'SERVE THE DISH'
+            actionButton.onclick = () => this.advanceCooking()
+        }
+        else
+        {
+            actionButton.style.display = 'none'
+        }
     }
 
-    bigScreenTransition(material,newTexture, duration, toDefault)
+    handleCookingClick(ingredientId)
     {
-        material.uniforms.uTexture2IsDefault.value = toDefault ? 1 : 0
-
-        material.uniforms.uTexture2.value = newTexture
-        gsap.to(material.uniforms.uProgress, {value:1,
-            duration: duration,
-            ease: "power1.inOut",
-            onComplete: () => {
-                material.uniforms.uTexture1IsDefault.value = toDefault ? 1 : 0 
-                material.uniforms.uTexture1.value = newTexture
-                material.uniforms.uProgress.value = 0
-                
+        const recipe = recipeById[this.logic.currentRecipe]
+        if(!recipe || !this.world || this.logic.recipeStep >= recipe.ingredients.length)
+        {
+            return
+        }
+        const expected = recipe.ingredients[this.logic.recipeStep]
+        if(!expected || expected.id !== ingredientId)
+        {
+            this.showToast('WRONG INGREDIENT — LOOK AT THE RECIPE CARD', 'red')
+            this.sounds.playBloop()
+            return
+        }
+        if(this.world.addCookingIngredient(recipe, ingredientId))
+        {
+            this.logic.recipeStep++
+            this.sounds.playDing()
+            this.updateRecipePanel()
+            if(this.logic.recipeStep >= recipe.ingredients.length)
+            {
+                this.setHint('All ingredients in — now stir and cook!')
             }
-        })
+        }
     }
 
-    sleep(ms) 
+    advanceCooking()
     {
-        return new Promise(resolve => setTimeout(resolve, ms));
+        const recipe = recipeById[this.logic.currentRecipe]
+        if(!recipe)
+        {
+            return
+        }
+
+        if(this.logic.recipeStep === recipe.ingredients.length)
+        {
+            this.logic.recipeStep++
+            this.sounds.playCooking()
+            this.setHint('Sizzling… stirring… the dhaba smells incredible')
+            document.querySelector('#recipeStep').textContent = 'COOKING…'
+            document.querySelector('#recipeAction').style.display = 'none'
+            window.setTimeout(() =>
+            {
+                this.logic.recipeStep++
+                this.updateRecipePanel()
+            }, this.reducedMotion ? 200 : 1900)
+            return
+        }
+
+        this.world.finishCooking(recipe)
+        this.sounds.playDing()
+        this.addOrder(recipe.result)
+        this.showToast(`${recipe.name} IS READY — ADDED TO YOUR ORDER`, 'green')
+        this.logic.recipeStep++
+        this.updateRecipePanel()
+        document.querySelector('#recipeStep').textContent = 'READY TO SERVE ✓'
+        document.querySelector('#recipeAction').style.display = 'none'
     }
 }

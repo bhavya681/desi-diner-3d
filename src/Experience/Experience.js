@@ -39,6 +39,7 @@ export default class Experience
         //config
         this.config = {}
         this.config.touch = false
+        this.config.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
         window.addEventListener('touchstart', () =>
         {
             this.config.touch = true

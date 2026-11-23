@@ -13,58 +13,63 @@ export default class Camera
         this.scene = this.experience.scene
         this.canvas = this.experience.canvas
         this.config = this.experience.config
+        this.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-        if(this.config.vertical === true)
-        {
-        this.aboutMeDistance = 2.6
-        this.projectsDistance = 4.6
-        }
-        else
-        {
-        this.aboutMeDistance = 2.2
-        this.projectsDistance = 4.2
-        }
-
-
+        this.anchors = this.createAnchors()
+        this.current = 'overview'
+        this.transitioning = false
 
         this.setInstance()
         this.setControls()
-        this.setCamAngles()
         this.setTransitions()
 
         if(this.debug.active)
         {
             this.debugFolder = this.debug.ui.addFolder('camera')
-
-            this.positionDebugFolder = this.debugFolder.addFolder('cameraPosition')
-            this.positionDebugFolder.add(this.instance.position, 'x').min(-20).max(20).step(0.1)
-            this.positionDebugFolder.add(this.instance.position, 'y').min(-20).max(20).step(0.1)
-            this.positionDebugFolder.add(this.instance.position, 'z').min(-20).max(20).step(0.1)
-
-            this.targetDebugFolder = this.debugFolder.addFolder('cameraTarget')
-            this.targetDebugFolder.add(this.controls.target, 'x').min(-20).max(20).step(0.1)
-            this.targetDebugFolder.add(this.controls.target, 'y').min(-20).max(20).step(0.1)
-            this.targetDebugFolder.add(this.controls.target, 'z').min(-20).max(20).step(0.1)
-
-            this.debugFolder.add(this.controls, 'enablePan')
-
-            this.cam = false
-            this.cameraToggle = {unlockCamera:false}
-            this.debugFolder
-            .add(this.cameraToggle, 'unlockCamera')
-            .onChange(() =>
-            {
-                this.cam ? this.camAngle.default() : this.camAngle.unlocked()
-            })   
+            this.debugFolder.add(this.instance.position, 'x').min(-60).max(60).step(0.1)
+            this.debugFolder.add(this.instance.position, 'y').min(-10).max(40).step(0.1)
+            this.debugFolder.add(this.instance.position, 'z').min(-60).max(60).step(0.1)
         }
+    }
+
+    createAnchors()
+    {
+        const anchors = {
+            overview: { position: [31, 18, 35], target: [0, 3, 3] },
+            entrance: { position: [0, 7.4, 15.5], target: [0, 5, 3] },
+            dining: { position: [7, 5.6, 8], target: [6.5, 2.1, -6] },
+            kitchen: { position: [-8.4, 5.2, 6.2], target: [-7, 2.2, -3.4] },
+            kadhai: { position: [-7, 3.6, 3], target: [-7, 1.7, -1.7] },
+            tandoor: { position: [-10.4, 3.6, 7.8], target: [-10.4, 1.8, 3.5] },
+            chai: { position: [9.2, 3.7, 7.8], target: [9.2, 1.8, 3.4] },
+            display: { position: [0, 3.4, 8], target: [0, 1.5, 4.2] },
+            outdoor: { position: [-1, 6, 17], target: [0, 1.2, 9] },
+            trucks: { position: [-17, 6, 35], target: [-10, 2.5, 24] },
+            highway: { position: [36, 9, 32], target: [0, 2.5, 17.5] },
+            prep: { position: [11.4, 4.4, -3], target: [11.4, 1.8, -8.6] },
+            storage: { position: [-12.6, 4.4, -4.6], target: [-12.6, 2, -10.2] },
+            menu: { position: [-5.6, 4.4, 5.2], target: [-5.6, 3.2, 2.1] },
+            cash: { position: [13.6, 3.8, 7.2], target: [13.4, 1.8, 3.2] },
+            spice: { position: [-7.5, 4.6, -8], target: [-7.5, 2.9, -12.8] }
+        }
+
+        if(this.config.vertical)
+        {
+            for(const name in anchors)
+            {
+                const distanceMultiplier = name === 'overview' || name === 'highway' || name === 'trucks' || name === 'outdoor' ? 1.42 : 1.24
+                anchors[name].position[2] *= distanceMultiplier
+                anchors[name].position[1] += 0.9
+            }
+        }
+
+        return anchors
     }
 
     setInstance()
     {
-        this.instance = new THREE.PerspectiveCamera(75, this.sizes.width / this.sizes.height, 0.4, 50)
-        this.instance.position.x = 15.9
-        this.instance.position.y = 6.8
-        this.instance.position.z = -11.4
+        this.instance = new THREE.PerspectiveCamera(56, this.sizes.width / this.sizes.height, 0.1, 600)
+        this.instance.position.set(...this.anchors.overview.position)
         this.scene.add(this.instance)
     }
 
@@ -72,175 +77,126 @@ export default class Camera
     {
         this.controls = new OrbitControls(this.instance, this.canvas)
         this.controls.enableDamping = true
+        this.controls.dampingFactor = 0.075
         this.controls.enablePan = false
-        this.controls.rotateSpeed = 1.2
-        this.controls.zoomSpeed = 0.8
-        this.controls.target.z = -1
-        this.controls.enableRotate = false
-        this.controls.enableZoom = false
+        this.controls.rotateSpeed = 0.5
+        this.controls.zoomSpeed = 0.7
+        this.controls.target.set(...this.anchors.overview.target)
+        this.setCameraLimits('overview')
     }
 
-    setCamAngles()
+    setCameraLimits(name)
     {
-        this.camAngle = {}
-
-        this.camAngle.unlocked = () =>
+        if(name === 'overview' || name === 'highway' || name === 'trucks' || name === 'outdoor')
         {
-            this.controls.maxDistance = 30
-            this.controls.minDistance = 0
-            this.controls.minAzimuthAngle = 0
-            this.controls.maxAzimuthAngle = Math.PI * 1.999
-            this.controls.minPolarAngle = 0
-            this.controls.maxPolarAngle = Math.PI
-            this.cam = true
+            this.controls.minDistance = this.config.vertical ? 28 : 18
+            this.controls.maxDistance = this.config.vertical ? 90 : 75
+            this.controls.minAzimuthAngle = -0.72
+            this.controls.maxAzimuthAngle = 0.72
+            this.controls.minPolarAngle = 0.62
+            this.controls.maxPolarAngle = 1.34
+            this.controls.enableRotate = true
+            this.controls.enableZoom = true
         }
-
-        this.camAngle.default = () =>
+        else
         {
-            this.controls.minDistance = 7
+            this.controls.minDistance = 2.2
             this.controls.maxDistance = 16
-            this.controls.minAzimuthAngle = 0 
-            this.controls.maxAzimuthAngle = Math.PI *1.9999
-            this.controls.minPolarAngle = Math.PI *0.2
-            this.controls.maxPolarAngle = Math.PI * 0.55
-            this.cam = false
+            this.controls.minAzimuthAngle = -Math.PI
+            this.controls.maxAzimuthAngle = Math.PI
+            this.controls.minPolarAngle = 0.48
+            this.controls.maxPolarAngle = Math.PI * 0.62
+            this.controls.enableRotate = true
+            this.controls.enableZoom = true
         }
 
-        this.camAngle.vendingMachine = () =>
+        if(this.reducedMotion)
         {
-            this.controls.minDistance = 2
-            this.controls.maxDistance = 3.5
-            this.controls.minAzimuthAngle = -(Math.PI * 0.1) //left
-            this.controls.maxAzimuthAngle = Math.PI * 0.1 //right
-            this.controls.minPolarAngle = Math.PI * .4
-            this.controls.maxPolarAngle = Math.PI * .53
+            this.controls.enableRotate = false
         }
-
-        this.camAngle.aboutMe = () =>
-        {
-            this.controls.minDistance = 1
-            this.controls.maxDistance = this.aboutMeDistance
-            this.controls.minAzimuthAngle = -(Math.PI * 0.2) //left
-            this.controls.maxAzimuthAngle = Math.PI * 0.2 //right
-            this.controls.minPolarAngle = Math.PI * .3
-            this.controls.maxPolarAngle = Math.PI * .65
-        }
-
-        this.camAngle.credits = () =>
-        {
-            this.controls.minDistance = 1.5
-            this.controls.maxDistance = 2.5
-            this.controls.minAzimuthAngle = -(Math.PI * 0.2) //left
-            this.controls.maxAzimuthAngle = Math.PI * 0.2 //right
-            this.controls.minPolarAngle = Math.PI * .3
-            this.controls.maxPolarAngle = Math.PI * .65
-        }
-    
     }
 
     setTransitions()
     {
         this.transitions = {}
 
-        this.transitions.vendingMachine = async (duration) =>
+        this.transitions.goTo = async (name, duration = 1.6) =>
         {
-            this.controls.enableRotate = false
-            this.controls.enableZoom = false
+            const anchor = this.anchors[name] || this.anchors.overview
+            const actualDuration = this.reducedMotion ? 0.14 : duration
 
-            gsap.to(this.instance.position, { duration: duration, ease: "power1.inOut",
-            x: 1.15,
-            y:-1.2,
-            z:this.projectsDistance})
-            gsap.to(this.controls.target, { duration: duration, ease: "power1.inOut",
-            x: 1.15,
-            y:-1.2,
-            z:1.7})
+            this.current = name
+            this.transitioning = true
+            this.controls.enabled = false
 
-            await this.sleep(1500)
-            // this.controls.enableRotate = true
-            this.controls.enableZoom = true
+            const fromPosition = this.instance.position.clone()
+            const toPosition = new THREE.Vector3(...anchor.position)
+            const arc = Math.min(4, fromPosition.distanceTo(toPosition) * 0.07)
+
+            gsap.killTweensOf(this.instance.position)
+            gsap.killTweensOf(this.controls.target)
+            gsap.killTweensOf(this.instance)
+
+            gsap.to(this.instance.position, {
+                duration: actualDuration,
+                ease: 'power3.inOut',
+                x: toPosition.x,
+                y: toPosition.y + arc,
+                z: toPosition.z,
+                onComplete: () =>
+                {
+                    gsap.to(this.instance.position, { duration: actualDuration * 0.32, y: toPosition.y, ease: 'sine.out' })
+                }
+            })
+
+            const target = new THREE.Vector3(...anchor.target)
+            gsap.to(this.controls.target, {
+                duration: actualDuration,
+                ease: 'power3.inOut',
+                x: target.x,
+                y: target.y,
+                z: target.z
+            })
+
+            const fov = name === 'overview' || name === 'highway' ? 56 : 50
+            gsap.to(this.instance, { duration: actualDuration, fov, onUpdate: () => this.instance.updateProjectionMatrix() })
+
+            await this.sleep(actualDuration * 1000 + 40)
+            this.controls.enabled = true
+            this.transitioning = false
+            this.setCameraLimits(name)
         }
 
-        this.transitions.default = async (duration) =>
+        this.transitions.focus = async (object, duration = 1.1, distance = 3.2) =>
         {
-            this.controls.enableRotate = false
-            this.controls.enableZoom = false
+            if(!object)
+            {
+                return
+            }
+            const position = object.getWorldPosition(new THREE.Vector3())
+            const direction = this.instance.position.clone().sub(this.controls.target).normalize()
+            const cameraPosition = position.clone().add(direction.multiplyScalar(distance))
+            cameraPosition.y = Math.max(cameraPosition.y, position.y + 1.2)
 
-            gsap.to(this.instance.position, { duration: duration, ease: "power1.inOut",
-            x: -11.1,
-            y: -1,
-            z: -7.6})
-            
-            gsap.to(this.controls.target, { duration: duration, ease: "power1.inOut",
-            x: 0,
-            y: 0,
-            z: -1})
-
-            await this.sleep(1500)
-            this.controls.enableRotate = true
-            this.controls.enableZoom = true
+            this.transitioning = true
+            this.controls.enabled = false
+            gsap.to(this.instance.position, { duration, ease: 'power2.inOut', x: cameraPosition.x, y: cameraPosition.y, z: cameraPosition.z })
+            gsap.to(this.controls.target, { duration, ease: 'power2.inOut', x: position.x, y: position.y, z: position.z })
+            await this.sleep(duration * 1000 + 30)
+            this.controls.enabled = true
+            this.transitioning = false
         }
 
-        this.transitions.jZhou = async (duration) =>
+        for(const name in this.anchors)
         {
-            this.controls.enableRotate = false
-            this.controls.enableZoom = false
-
-            gsap.to(this.instance.position, { duration: duration, ease: "power1.inOut",
-            x: -10.2,
-            y: 6.3,
-            z: 3.8})
-
-            await this.sleep(1500)
-            this.controls.enableRotate = true
-            this.controls.enableZoom = true
+            this.transitions[name] = async (duration = 1.6) => this.transitions.goTo(name, duration)
         }
-
-        this.transitions.aboutMe = async (duration) =>
-        {
-            this.controls.enableRotate = false
-            this.controls.enableZoom = false
-
-            gsap.to(this.instance.position, { duration: duration, ease: "power1.inOut",
-            x: 0.66,
-            y: 3.8,
-            z: this.aboutMeDistance})
-            gsap.to(this.controls.target, { duration: duration, ease: "power1.inOut",
-            x: 0.66,
-            y: 3.8,
-            z: 0.7})
-
-            await this.sleep(1500)
-            // this.controls.enableRotate = true
-            this.controls.enableZoom = true
-        }
-
-        this.transitions.credits = async (duration) =>
-        {
-            this.controls.enableRotate = false
-            this.controls.enableZoom = false
-
-            gsap.to(this.instance.position, { duration: duration, ease: "power1.inOut",
-            x: -0.6,
-            y: -1.05,
-            z: 3.8})
-            gsap.to(this.controls.target, { duration: duration, ease: "power1.inOut",
-            x: -0.6,
-            y: -1.05,
-            z: 2.2})
-
-            await this.sleep(1500)
-            // this.controls.enableRotate = true
-            this.controls.enableZoom = true
-        }
-    
     }
 
-    sleep(ms) 
+    sleep(ms)
     {
-        return new Promise(resolve => setTimeout(resolve, ms));
+        return new Promise((resolve) => setTimeout(resolve, ms))
     }
-
 
     resize()
     {
@@ -253,5 +209,3 @@ export default class Camera
         this.controls.update()
     }
 }
-
-// test

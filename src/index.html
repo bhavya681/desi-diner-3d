@@ -2,63 +2,153 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Jesse's Ramen</title>
-
-    <meta name="description" content="Management Consultant at EY. Technology, AI and design enthusiast." />
-
-    <meta itemprop=name content="Jesse Zhou - Business, Technology and Design">
-    <meta itemprop="description" content="Management Consultant at EY. Technology, AI and design enthusiast.">
-    <meta itemprop="image" content=https://jesse-zhou.com/social/share-1200x630.png>
-
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Jesse Zhou - Business, Technology and Design">
-    <meta name="twitter:description" content="Management Consultant at EY. Technology, AI and design enthusiast.">
-    <meta name="twitter:image" content="https://jesse-zhou.com/social/share-1200x600.png">
-
-    <meta property="og:site_name" content="Jesse Zhou - Business, Technology and Design">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://jesse-simon.com">
-    <meta property="og:title" content="Jesse Zhou - Business, Technology and Design">
-    <meta property="og:description" content="Management Consultant at EY. Technology, AI and design enthusiast.">
-    <meta property="og:image" content="https://jesse-zhou.com/social/share-1200x630.png">
-
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sardar Ji Dhaba — Highway 1, Open All Night</title>
+    <meta name="description" content="An immersive 3D Indian highway dhaba. Explore the kitchen, light the tandoor, pour chai, wake the trucks and cook your own dhaba special.">
+    <meta name="theme-color" content="#0a0607">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
     <link rel="apple-touch-icon" sizes="180x180" href="/static/favicon/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon/favicon-16x16.png">
     <link rel="manifest" href="/static/favicon/site.webmanifest">
-    <link rel="mask-icon" href="/static/favicon/safari-pinned-tab.svg" color="#9933ff">
-    <meta name="apple-mobile-web-app-title" content="Jesse's Ramen">
-    <meta name="application-name" content="Jesse's Ramen">
-    <meta name="msapplication-TileColor" content="#9933ff">
-    <meta name="theme-color" content="#ffffff">
+    <link rel="mask-icon" href="/static/favicon/safari-pinned-tab.svg" color="#ff6a00">
 </head>
 <body>
     <canvas class="webgl"></canvas>
-    <div class="overlay"></div>
-    <div id="cooking">
-        <div class="bubble"></div>
-        <div class="bubble"></div>
-        <div class="bubble"></div>
-        <div class="bubble"></div>
-        <div class="bubble"></div>
-        <div id=area>
-            <div id="sides">
-                <div id="pan"></div>
-                <div id="handle"></div>
-            </div>
-            <div id="pancake">
-                <div id="pastry"></div>
-                <div id="pastry2"></div>
-                <div id="pastry3"></div>
-            </div>
-            
-        </div>
-        <h1>Cooking Your Ramen... <span id="progressPercentage"></span>%</h1>
-        
-    </div>
-    <button class="start">START</button>
 
+    <div class="overlay">
+        <div class="grain"></div>
+        <div class="loaderMarquee" aria-hidden="true">
+            <span>DHABA OPEN 24 HOURS</span><span>✦</span><span>TANDOOR • CHAI • KHANA</span><span>✦</span><span>NH-1 HIGHWAY</span><span>✦</span>
+        </div>
+        <div class="loaderMark" aria-hidden="true">
+            <span class="flame"></span>
+            <span class="flame flameSmall"></span>
+        </div>
+        <p class="loaderKicker">NATIONAL HIGHWAY 1 • OPEN ALL NIGHT</p>
+        <h1 class="loaderTitle">SARDAR JI <span>DHABA</span></h1>
+        <p class="loaderTagline">A living, breathing highway kitchen. Come hungry.</p>
+        <div class="loaderBar"><span id="progressBar"></span></div>
+        <p class="loaderStatus"><span id="loaderMessage">Lighting the tandoor</span> <span id="progressPercentage">0</span>%</p>
+        <button class="start" type="button">ENTER THE DHABA</button>
+        <p class="loaderControls">DRAG TO LOOK AROUND &nbsp;•&nbsp; TAP GLOWING THINGS &nbsp;•&nbsp; EXPLORE THE YARD</p>
+    </div>
+
+    <div class="hud">
+        <header class="hudTop">
+            <button class="hudButton backButton" id="backButton" type="button">← BACK</button>
+            <div class="brandMark">
+                <span class="brandName">SARDAR JI DHABA</span>
+                <span class="brandSub">NH-1 • OPEN ALL NIGHT</span>
+            </div>
+            <div class="hudActions">
+                <button class="hudButton" id="cookButton" type="button">COOK</button>
+                <button class="hudButton" id="menuButton" type="button">MENU</button>
+                <button class="hudButton" id="settingsButton" type="button">SETTINGS</button>
+                <button class="hudButton" id="resetButton" type="button">RESET VIEW</button>
+                <button class="hudButton soundButton" id="soundButton" type="button">SOUND ON</button>
+            </div>
+        </header>
+
+        <nav class="navRail" id="navRail" aria-label="Explore dhaba areas"></nav>
+
+        <div class="hudBottom">
+            <div class="hint"><span class="hintDot"></span><span id="hintText">Tap anything that glows — the dhaba is full of secrets</span></div>
+            <button class="orderChip" id="orderButton" type="button"><span class="orderLabel">YOUR ORDER</span><span id="orderCount">0</span><span class="orderLabel">ITEMS</span></button>
+        </div>
+
+        <div class="hoverLabel" id="hoverLabel"></div>
+        <div class="toast" id="toast"></div>
+
+        <div class="storyCard" id="storyCard">
+            <span class="storyKicker">DHABA STORY</span>
+            <strong id="storyTitle">A little secret</strong>
+            <p id="storyText"></p>
+        </div>
+    </div>
+
+    <div class="ui-panel" id="menuPanel">
+        <div class="panelScrim"></div>
+        <div class="panelBody panelWide">
+            <div class="panelHeader">
+                <div><span class="panelKicker">FRESH OFF THE TAWA</span><h2>TODAY’S MENU</h2></div>
+                <button class="panelClose" data-close type="button">✕</button>
+            </div>
+            <div class="menuColumns">
+                <div class="menuList" id="menuList"></div>
+                <aside class="menuAside">
+                    <span class="asideBadge">24x7</span>
+                    <h3>ORDER AT THE COUNTER</h3>
+                    <p>Tap any dish for ingredients, spice level and price. Add what you like — the counter will have it ready.</p>
+                    <p class="asideSmall">Made fresh in the open kitchen. No microwaves. No shortcuts.</p>
+                </aside>
+            </div>
+        </div>
+    </div>
+
+    <div class="ui-panel" id="dishCard">
+        <div class="panelScrim"></div>
+        <div class="panelBody panelDish">
+            <button class="panelClose floating" data-close type="button">✕</button>
+            <div class="dishHero"><span class="dishOrb" id="dishSwatch"></span><span class="dishKicker">FROM THE DHABA KITCHEN</span></div>
+            <h2 id="dishName">Butter Chicken</h2>
+            <p class="dishDescription" id="dishDescription"></p>
+            <div class="dishMeta"><span id="dishSpice"></span><strong id="dishPrice">₹320</strong></div>
+            <span class="sectionLabel">WHAT GOES IN</span>
+            <div class="ingredientList" id="dishIngredients"></div>
+            <button class="primaryButton" id="addDishButton" type="button">ADD TO ORDER</button>
+        </div>
+    </div>
+
+    <div class="ui-panel" id="recipeCard">
+        <div class="panelScrim"></div>
+        <div class="panelBody panelRecipe">
+            <div class="panelHeader">
+                <div><span class="panelKicker">COOK WITH THE CHEF</span><h2>CHOOSE YOUR DISH</h2></div>
+                <button class="panelClose" data-close type="button">✕</button>
+            </div>
+            <div class="recipeList" id="recipeList"></div>
+            <div class="recipeStage">
+                <div class="stageHeader"><strong id="recipeTitle">DHABA SPECIAL BUTTER CHICKEN</strong><span id="recipeStep">STEP 1 / 7</span></div>
+                <p class="stageHint">Tap the glowing ingredients in the kitchen, or use the chips below.</p>
+                <div class="recipeIngredients" id="recipeIngredients"></div>
+                <button class="primaryButton" id="recipeAction" type="button" style="display:none">STIR &amp; COOK</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="ui-panel" id="orderDrawer">
+        <div class="panelScrim"></div>
+        <div class="panelBody panelOrder">
+            <div class="panelHeader">
+                <div><span class="panelKicker">CASH COUNTER</span><h2>YOUR ORDER</h2></div>
+                <button class="panelClose" data-close type="button">✕</button>
+            </div>
+            <div class="orderList" id="orderList"></div>
+            <div class="orderFooter">
+                <span>TOTAL</span><strong id="orderTotal">₹0</strong>
+            </div>
+            <button class="primaryButton" id="checkoutButton" type="button">PRINT THE BILL</button>
+        </div>
+    </div>
+
+    <div class="ui-panel" id="settingsPanel">
+        <div class="panelScrim"></div>
+        <div class="panelBody panelSettings">
+            <div class="panelHeader">
+                <div><span class="panelKicker">DHABA CONTROLS</span><h2>SETTINGS</h2></div>
+                <button class="panelClose" data-close type="button">✕</button>
+            </div>
+            <span class="sectionLabel">VISUAL QUALITY</span>
+            <div class="qualityRow">
+                <button type="button" data-quality="high">HIGH</button>
+                <button type="button" data-quality="medium">MEDIUM</button>
+                <button type="button" data-quality="low">LOW</button>
+            </div>
+            <span class="sectionLabel">SOUND</span>
+            <p class="settingsNote">Ambient highway, tandoor fire, radio and horns start only after you enter. Press M to mute anywhere.</p>
+            <p class="settingsNote">Reduced motion is respected automatically from your system settings.</p>
+        </div>
+    </div>
 </body>
 </html>
